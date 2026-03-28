@@ -38,11 +38,14 @@ export async function POST(req: NextRequest) {
 
     const pdfBytes = await pdfDoc.save();
 
-    return new NextResponse(Buffer.from(pdfBytes), {
+    const pdfBuffer = Buffer.from(pdfBytes);
+    
+    return new NextResponse(pdfBuffer, {
       status: 200,
       headers: {
-        'Content-Type': 'application/pdf',
+        'Content-Type': 'application/pdf; charset=utf-8',
         'Content-Disposition': `attachment; filename="${formType}-filled.pdf"`,
+        'Content-Length': String(pdfBuffer.length),
       },
     });
 
