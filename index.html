@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaxHelper 報稅助手</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>🧾 TaxHelper 報稅助手</h1>
+        <div class="countdown" id="countdown"></div>
+    </div>
+
+    <div class="main-container">
+        <div class="left-sidebar">
+            <div class="card">
+                <h2>📤 文件上傳</h2>
+                <button class="btn btn-primary" onclick="openModal('uploadModal')">
+                    📄 Upload & Generate
+                </button>
+                <button class="btn btn-secondary" onclick="openModal('recordModal')">
+                    📋 Personal Record
+                </button>
+                
+                <div class="info-section">
+                    <h4>💡 提示</h4>
+                    <ul>
+                        <li>所有 F-1 學生都必須提交 Form 8843</li>
+                        <li>如有收入，需提交 Form 1040-NR</li>
+                        <li>请根据下方清单上傳您的身份信息文件</li>
+                        <li>我们将为您生成可直接打印寄回税务局的表格</li>
+                    </ul>
+                </div>
+
+                <div style="margin-top: 15px; padding: 10px; background: #fff3e0; border-radius: 8px; border-left: 4px solid #ff9800;">
+                    <p style="font-size: 0.85rem; color: #e65100; margin: 0;">
+                        <strong>⚠️ 隱私提醒：</strong>這是 MVP 演示版。所有對話和上傳的內容僅保存在您的本地設備上。
+                    </p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📝 需要上传的文件清单</h2>
+                <div class="document-checklist" id="documentChecklist">
+                    <h4>根據您的情況，您可能需要：</h4>
+                    <div id="checklistItems">
+                        <div class="checklist-item">
+                            <input type="checkbox" id="doc1" checked disabled>
+                            <label for="doc1">Form 8843（所有 F-1 學生必需）</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="doc2" disabled>
+                            <label for="doc2">Form 1040-NR（如有收入）</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="doc3" disabled>
+                            <label for="doc3">護照掃描件</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="doc4" disabled>
+                            <label for="doc4">I-94 入境記錄</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="doc5" disabled>
+                            <label for="doc5">I-20 表格</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="doc6" disabled>
+                            <label for="doc6">SSN 或 ITIN</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-content">
+            <div class="chat-container">
+                <div class="chat-header">
+                    <h2>💬 智能稅務顧問</h2>
+                </div>
+                
+                <div class="chat-messages" id="chatMessages">
+                    <div class="welcome-message">
+                        <h3>👋 歡迎使用 TaxHelper！</h3>
+                        <p>我是您的智能稅務助理，可以幫助您了解複雜的稅務術語，</p>
+                        <p>並根據您的情況推薦需要提交的文件。</p>
+                        <p style="margin-top: 20px; font-size: 0.95rem;">請告訴我您的情況，例如：</p>
+                        <p style="font-size: 0.9rem; color: #667eea;">"我是F-1學生，去年在美國實習了3個月"</p>
+                        <p style="font-size: 0.9rem; color: #667eea;">"我有校內工作，需要報稅嗎？"</p>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <button class="quick-btn" onclick="askQuestion('我需要提交哪些表格？')">📋 需要哪些表格？</button>
+                    <button class="quick-btn" onclick="askQuestion('什麼是Form 8843？')">❓ Form 8843 是什麼？</button>
+                    <button class="quick-btn" onclick="askQuestion('什麼是Form 1040-NR')">❓ Form 1040-NR 是什麼？</button>
+                    <button class="quick-btn" onclick="askQuestion('我收到了W-2表格，怎麼辦？')">📨 收到W-2怎麼辦？</button>
+                    <button class="quick-btn" onclick="askQuestion('沒有收入也要報稅嗎？')">💰 沒有收入要報稅嗎？</button>
+                </div>
+
+                <div class="chat-input-container">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="輸入您的問題..." onkeypress="handleKeyPress(event)">
+                    <button class="send-btn" onclick="sendMessage()">發送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📤 上傳並生成文件</h2>
+                <button class="close-btn" onclick="closeModal('uploadModal')">&times;</button>
+            </div>
+            
+            <div style="background: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+                <h4 style="color: #2e7d32; margin-bottom: 8px;">🔒 隱私安全保障</h4>
+                <p style="color: #555; font-size: 0.9rem; margin: 0;">
+                    <strong>MVP 演示版：</strong>所有文件僅保存在您本地設備的瀏覽器中，<strong>不會上傳到任何服務器</strong>。
+                    關閉瀏覽器後，所有上傳記錄將自動清除。
+                </p>
+            </div>
+            
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <p>📁 點擊上傳文件</p>
+                <small>支持 PDF, JPG, PNG 格式</small>
+                <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="handleFileUpload(event)">
+            </div>
+
+            <div class="file-list" id="fileList">
+                <h4>已上傳的文件：</h4>
+                <div id="uploadedFiles"></div>
+            </div>
+
+            <div class="info-section">
+                <h4>📋 需要上傳的基本文件：</h4>
+                <ul>
+                    <li>護照首頁掃描件</li>
+                    <li>I-94 入出境記錄</li>
+                    <li>I-20 表格</li>
+                    <li>SSN 或 ITIN 證明（如有）</li>
+                    <li>收入證明（W-2, 1042-S, 1099 等）</li>
+                </ul>
+            </div>
+
+            <button class="btn btn-primary" onclick="generateDocuments()">
+                🚀 生成稅務文件
+            </button>
+        </div>
+    </div>
+
+    <div class="modal" id="recordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📋 個人報稅記錄</h2>
+                <button class="close-btn" onclick="closeModal('recordModal')">&times;</button>
+            </div>
+
+            <div class="history-list" id="historyList">
+                <div class="history-item" onclick="alert('查看 2023 稅年記錄')">
+                    <h4>2023 稅年</h4>
+                    <p>Form 8843, Form 1040-NR</p>
+                    <div class="date">提交日期：2023年4月15日</div>
+                </div>
+                <div class="history-item" onclick="alert('查看 2022 稅年記錄')">
+                    <h4>2022 稅年</h4>
+                    <p>Form 8843</p>
+                    <div class="date">提交日期：2022年4月15日</div>
+                </div>
+                <div class="history-item" onclick="alert('查看 2021 稅年記錄')">
+                    <h4>2021 稅年</h4>
+                    <p>Form 8843</p>
+                    <div class="date">提交日期：2021年4月15日</div>
+                </div>
+            </div>
+
+            <div class="info-section" style="margin-top: 20px;">
+                <h4>💡 記錄說明</h4>
+                <p>這裡保存了您歷年提交的稅務文件副本，方便您回顧和参考。建議至少保存 7 年的記錄以備 IRS 查驗。</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
