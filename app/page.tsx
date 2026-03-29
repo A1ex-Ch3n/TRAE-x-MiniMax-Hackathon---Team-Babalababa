@@ -418,9 +418,9 @@ export default function Home() {
     } else {
       summaryContent += `
         <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
-          <p style="margin: 0; color: #856404;"><strong>⚠️ 注意：</strong>由於您有美國收入，您需要同時提交 Form 8843 和 Form 1040-NR。Form 1040-NR 較為複雜，建議您諮詢專業稅務顧問。</p>
+          <h5 style="margin:0 0 10px 0; color: #856404;"><strong>下一步：生成 1040-NR</strong></h5>
+          <p style="margin: 0; color: #856404;">由於您有美國收入，您需要提交 <strong>Form 1040-NR</strong>。請使用左側的 <strong>'Upload W2 & Generate 1040-NR'</strong> 按鈕來上傳您的 W2 文件，系統將會為您自動生成 1040-NR 表格。</p>
         </div>
-        <p style="margin-top: 15px; color: #666; font-size: 0.9rem;">您仍可以點擊下方按鈕先生成 Form 8843。</p>
       `;
     }
 
@@ -430,7 +430,12 @@ export default function Home() {
     `;
 
     addMessage(summaryContent, 'bot');
-    setShowFormButton(true);
+    // Only show the 8843 button if the user has NO income
+    if (!hasIncome) {
+      setShowFormButton(true);
+    } else {
+      setShowFormButton(false);
+    }
   };
 
   const generateForm8843 = async () => {
@@ -580,6 +585,57 @@ export default function Home() {
     alert('文件生成功能即將推出！\n\n已收集的資料：\n- 護照資訊\n- 學校資訊\n- 簽證歷史\n- 旅行記錄\n- 收入情況');
   };
 
+  const handleW2UploadAndGenerate1040NR = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    addMessage(`正在從 W2 文件 (${file.name}) 生成 1040-NR 表格...`, 'bot');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/generate-1040nr-from-w2', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        // The server returned an error. It might be JSON or an HTML page from a crash.
+        const responseBody = await response.text();
+        let errorDetails = 'PDF generation failed on the server.';
+        try {
+          // Try to parse the response as JSON
+          const errorData = JSON.parse(responseBody);
+          errorDetails = errorData.details || errorData.error || errorDetails;
+        } catch (e) {
+          // If it fails, it's not JSON. It's likely an HTML error page.
+          console.error("Response was not valid JSON. It was likely an HTML error page from a server crash.");
+          errorDetails = "Backend API crashed. Check the terminal where you ran 'npm run dev' for the full error log.";
+        }
+        throw new Error(errorDetails);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Generated_Form_1040NR_from_${file.name}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      addMessage('✅ Form 1040-NR PDF 已經成功生成並下載！', 'bot');
+    } catch (error) {
+      console.error('Error generating 1040-NR:', error);
+      addMessage(`❌ 生成 1040-NR 時發生錯誤: ${error instanceof Error ? error.message : 'Unknown error'}`, 'bot');
+    }
+
+    // Reset the file input so the user can upload the same file again if they want
+    event.target.value = '';
+  };
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
@@ -600,7 +656,22 @@ export default function Home() {
           <div className="card">
             <h2>📤 文件上傳</h2>
             <button className="btn btn-primary" onClick={() => setUploadModalOpen(true)}>
-              📄 Upload & Generate
+              📄 Upload & Generate (8843)
+            </button>
+            {/* Hidden file input for W2 -> 1040NR flow */}
+            <input 
+              type="file" 
+              id="w2-upload-for-1040nr" 
+              style={{ display: 'none' }} 
+              onChange={handleW2UploadAndGenerate1040NR} 
+              accept=".pdf" 
+            />
+            <button 
+              className="btn btn-secondary" 
+              style={{ marginTop: '10px' }} 
+              onClick={() => document.getElementById('w2-upload-for-1040nr')?.click()}
+            >
+              📄 Upload W2 & Generate 1040-NR
             </button>
             <button className="btn btn-secondary" onClick={() => setRecordModalOpen(true)}>
               📋 Personal Record

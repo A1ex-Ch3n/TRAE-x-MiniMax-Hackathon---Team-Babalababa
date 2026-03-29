@@ -1,4 +1,4 @@
-// File: /Users/alexy/Desktop/TRAE_MiniMax_Hackathon/TRAE-x-MiniMax-Hackathon---Team-Babalababa/app/page.tsx
+// File: /Users/carolw/Desktop/TRAE-x-MiniMax-Hackathon---Team-Babalababa/app/page.tsx
 import * as entry from '../../../app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

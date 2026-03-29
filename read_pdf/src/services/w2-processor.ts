@@ -8,7 +8,9 @@ export class W2ProcessorService {
     const warnings: string[] = [];
 
     try {
-      const text = await pdfParserService.extractW2Text(buffer);
+      // FIX: Call the correct method `parsePDF` and get the `text` property from the result.
+      const parsedResult = await pdfParserService.parsePDF(buffer);
+      const text = parsedResult.text;
       
       const validation = pdfParserService.validateW2Text(text);
       warnings.push(...validation.warnings);
@@ -39,7 +41,8 @@ export class W2ProcessorService {
         warnings,
       };
     } catch (error) {
-      errors.push(`Processing error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      errors.push(`Processing error: ${errorMessage}`);
       return {
         rawText: '',
         confidence: 0,
@@ -95,12 +98,12 @@ export class W2ProcessorService {
 
   private isValidEIN(ein: string): boolean {
     const einCleaned = ein.replace(/[-\s]/g, '');
-    return /^2[0-9]{7}$/.test(einCleaned);
+    return /^\d{9}$/.test(einCleaned) || /^\d{2}-\d{7}$/.test(einCleaned);
   }
 
   private isValidSSN(ssn: string): boolean {
     const ssnCleaned = ssn.replace(/[-\s]/g, '');
-    return /^[0-9]{9}$/.test(ssnCleaned);
+    return /^\d{9}$/.test(ssnCleaned);
   }
 
   private calculateConfidence(w2Form: W2Form): number {

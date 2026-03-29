@@ -1,23 +1,20 @@
-import pdfParse from 'pdf-parse';
+//import pdfParse from 'pdf-parse';
+//const pdfParse = require('pdf-parse');
+const pdfParse = require('pdf-parse/lib/pdf-parse.js');
+// 在逻辑中兼容处理：
+
 
 export interface PDFParseResult {
   text: string;
   numPages: number;
-  info: {
-    title?: string;
-    author?: string;
-    subject?: string;
-    keywords?: string;
-    creationDate?: string;
-    modDate?: string;
-  };
-  metadata?: any;
+  info: any;
+  metadata: any;
 }
-
 export class PDFParserService {
-  async parsePDF(buffer: Buffer): Promise<PDFParseResult> {
+       async parsePDF(buffer: Buffer): Promise<PDFParseResult> {
     try {
-      const data = await pdfParse(buffer);
+      // 现在的 pdfParse 应该是直接的函数了
+      const data = await (pdfParse as any)(buffer);
       
       return {
         text: data.text,
@@ -26,64 +23,23 @@ export class PDFParserService {
         metadata: data.metadata || {},
       };
     } catch (error) {
+      // 如果还报错，打印一下这个“新”的 pdfParse 是什么
+      console.error('Final check - pdfParse is:', typeof pdfParse);
       throw new Error(`Failed to parse PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  async extractW2Text(buffer: Buffer): Promise<string> {
-    const result = await this.parsePDF(buffer);
-    
-    const cleanedText = this.cleanW2Text(result.text);
-    
-    return cleanedText;
-  }
 
-  private cleanW2Text(text: string): string {
-    let cleaned = text;
-    
-    cleaned = cleaned.replace(/\s+/g, ' ');
-    
-    cleaned = cleaned.replace(/[^\x20-\x7E\n]/g, '');
-    
-    cleaned = cleaned.replace(/(\w)-\s+(\w)/g, '$1$2');
-    
-    return cleaned.trim();
-  }
-
-  validateW2Text(text: string): { valid: boolean; warnings: string[] } {
+  
+  validateW2Text(text: string) {
     const warnings: string[] = [];
-    
-    const requiredFields = [
-      'SSN',
-      'EIN',
-      'Wages',
-      'Federal',
-      'Social Security',
-      'Medicare',
-    ];
-    
-    const missingFields = requiredFields.filter(
-      field => !text.toLowerCase().includes(field.toLowerCase())
-    );
-    
-    if (missingFields.length > 0) {
-      warnings.push(`Possible missing fields: ${missingFields.join(', ')}`);
+    if (!text.includes('W-2')) {
+      warnings.push('The document may not be a W-2 form.');
     }
-    
-    const ssnPattern = /\d{3}[-\s]?\d{2}[-\s]?\d{4}/;
-    if (!ssnPattern.test(text)) {
-      warnings.push('SSN format not detected or may be incomplete');
+    if (!text.includes('Employer identification number')) {
+      warnings.push('Missing "Employer identification number" field.');
     }
-    
-    const einPattern = /\d{2}[-\s]?\d{7}/;
-    if (!einPattern.test(text)) {
-      warnings.push('EIN format not detected or may be incomplete');
-    }
-    
-    return {
-      valid: missingFields.length < requiredFields.length / 2,
-      warnings,
-    };
+    return { warnings };
   }
 }
 
